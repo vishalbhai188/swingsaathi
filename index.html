@@ -293,3 +293,309 @@ function profitLoss(){
  return holdingValue()-investedValue();
 }
 </script>
+ 
+<script>
+/* ==================================
+   SWINGSAATHI - COMPLETE PART 3
+   ================================== */
+
+// PAGE NAVIGATION
+function showPage(page, btn) {
+  document.querySelectorAll(".page").forEach(function(p) {
+    p.classList.remove("active");
+  });
+
+  const target = document.getElementById(page);
+  if (target) target.classList.add("active");
+
+  document.querySelectorAll("nav button").forEach(function(b) {
+    b.classList.remove("active");
+  });
+
+  if (btn) btn.classList.add("active");
+  renderAll();
+}
+
+// STOCK LIST
+function renderStocks(list, elementId) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+
+  if (!list.length) {
+    el.innerHTML = "<p>No stocks found.</p>";
+    return;
+  }
+
+  el.innerHTML = list.map(function(s) {
+    return `
+      <div class="stock-row">
+        <div>
+          <strong>${s.symbol}</strong>
+          <div class="muted">${s.name}</div>
+        </div>
+        <div class="stock-right">
+          <strong>${money(s.price)}</strong>
+          <div>
+            <button class="buy" onclick="openTrade('${s.symbol}','BUY')">Buy</button>
+            <button class="sell" onclick="openTrade('${s.symbol}','SELL')">Sell</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// PORTFOLIO
+function renderHoldings() {
+  const el = document.getElementById("holdings");
+  if (!el) return;
+
+  const items = Object.entries(account.holdings)
+    .filter(function(item) {
+      return item[1].qty > 0;
+    });
+
+  if (!items.length) {
+    el.innerHTML = "<p>No holdings yet. Buy a stock to get started.</p>";
+    return;
+  }
+
+  el.innerHTML = items.map(function(item) {
+    const symbol = item[0];
+    const h = item[1];
+    const stock = getStock(symbol);
+    const price = stock ? stock.price : h.avg;
+    const value = price * h.qty;
+    const profit = (price - h.avg) * h.qty;
+
+    return `
+      <div class="stock-row">
+        <div>
+          <strong>${symbol}</strong>
+          <div class="muted">${h.qty} shares · Avg. ${money(h.avg)}</div>
+        </div>
+        <div class="stock-right">
+          <strong>${money(value)}</strong>
+          <div class="${profit >= 0 ? "green" : "red"}">
+            ${money(profit)}
+          </div>
+          <button class="sell" onclick="openTrade('${symbol}','SELL')">Sell</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// TRADE HISTORY
+function renderHistory() {
+  const el = document.getElementById("history");
+  if (!el) return;
+
+  if (!account.history.length) {
+    el.innerHTML = '<tr><td colspan="6">No trades yet.</td></tr>';
+    return;
+  }
+
+  el.innerHTML = [...account.history].reverse().map(function(t) {
+    return `
+      <tr>
+        <td>${t.time}</td>
+        <td>${t.symbol}</td>
+        <td class="${t.type === "BUY" ? "green" : "red"}">${t.type}</td>
+        <td>${t.qty}</td>
+        <td>${money(t.price)}</td>
+        <td>${money(t.price * t.qty)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+// DASHBOARD SUMMARY
+function renderSummary() {
+  const currentValue = holdingValue();
+  const investment = investedValue();
+  const profit = profitLoss();
+
+  const cashEl = document.getElementById("cash");
+  const investedEl = document.getElementById("invested");
+  const portfolioEl = document.getElementById("portfolio");
+  const pnlEl = document.getElementById("pnl");
+  const countEl = document.getElementById("count");
+  const holdingEl = document.getElementById("holdingValue");
+
+  if (cashEl) cashEl.textContent = money(account.cash);
+  if (investedEl) investedEl.textContent = money(investment);
+  if (portfolioEl) portfolioEl.textContent = money(currentValue);
+  if (holdingEl) holdingEl.textContent = money(currentValue);
+
+  if (pnlEl) {
+    pnlEl.textContent = money(profit);
+    pnlEl.className = profit >= 0 ? "green" : "red";
+  }
+
+  if (countEl) {
+    countEl.textContent = Object.values(account.holdings)
+      .filter(function(h) { return h.qty > 0; }).length;
+  }
+}
+
+// REFRESH ALL SECTIONS
+function renderAll() {
+  renderStocks(stocks, "homeStocks");
+  renderStocks(stocks, "marketStocks");
+  renderHoldings();
+  renderHistory();
+  renderSummary();
+}
+
+// OPEN BUY / SELL WINDOW
+function openTrade(symbol, type) {
+  const stock = getStock(symbol);
+  if (!stock) return;
+
+  selectedSymbol = symbol;
+  tradeType = type;
+
+  document.getElementById("tradeTitle").textContent =
+    type === "BUY" ? "Buy " + symbol : "Sell " + symbol;
+
+  document.getElementById("tradeSymbol").textContent = symbol;
+  document.getElementById("tradePrice").textContent = money(stock.price);
+  document.getElementById("quantity").value = 1;
+
+  document.getElementById("tradeModal").style.display = "flex";
+  updateAmount();
+}
+
+// CLOSE WINDOW
+function closeTrade() {
+  document.getElementById("tradeModal").style.display = "none";
+}
+
+// UPDATE ORDER VALUE
+function updateAmount() {
+  const stock = getStock(selectedSymbol);
+  const qty = Math.floor(Number(document.getElementById("quantity").value) || 0);
+  const amount = stock ? stock.price * Math.max(0, qty) : 0;
+
+  document.getElementById("orderValue").textContent = money(amount);
+}
+
+// EXECUTE PAPER TRADE
+function executeTrade() {
+  const stock = getStock(selectedSymbol);
+  const qty = Math.floor(Number(document.getElementById("quantity").value));
+
+  if (!stock || !Number.isFinite(qty) || qty <= 0) {
+    alert("Please enter a valid quantity.");
+    return;
+  }
+
+  const value = stock.price * qty;
+  const old = account.holdings[selectedSymbol] || {
+    qty: 0,
+    avg: 0
+  };
+
+  if (tradeType === "BUY") {
+    if (value > account.cash) {
+      alert("Insufficient virtual balance.");
+      return;
+    }
+
+    const totalQty = old.qty + qty;
+    old.avg = ((old.avg * old.qty) + value) / totalQty;
+    old.qty = totalQty;
+    account.cash -= value;
+
+  } else {
+    if (qty > old.qty) {
+      alert("You don't have enough shares to sell.");
+      return;
+    }
+
+    old.qty -= qty;
+    account.cash += value;
+  }
+
+  account.holdings[selectedSymbol] = old;
+
+  account.history.push({
+    symbol: selectedSymbol,
+    type: tradeType,
+    qty: qty,
+    price: stock.price,
+    time: new Date().toLocaleString()
+  });
+
+  save();
+  closeTrade();
+  renderAll();
+
+  alert(tradeType + " order successful! This is paper trading.");
+}
+
+// RESET ACCOUNT
+function resetAccount() {
+  const answer = confirm(
+    "Are you sure you want to reset your paper trading account?"
+  );
+
+  if (!answer) return;
+
+  account = {
+    cash: START,
+    holdings: {},
+    history: []
+  };
+
+  save();
+  renderAll();
+
+  alert("Your paper trading account has been reset.");
+}
+
+// SEARCH STOCKS
+function searchStocks() {
+  const input = document.getElementById("search");
+  if (!input) return;
+
+  const query = input.value.trim().toLowerCase();
+
+  const filtered = stocks.filter(function(s) {
+    return s.symbol.toLowerCase().includes(query) ||
+      s.name.toLowerCase().includes(query);
+  });
+
+  renderStocks(filtered, "marketStocks");
+}
+
+// EVENT LISTENERS
+document.getElementById("quantity").addEventListener(
+  "input",
+  updateAmount
+);
+
+document.getElementById("confirmTrade").addEventListener(
+  "click",
+  executeTrade
+);
+
+document.getElementById("search").addEventListener(
+  "input",
+  searchStocks
+);
+
+document.getElementById("tradeModal").addEventListener(
+  "click",
+  function(event) {
+    if (event.target === this) closeTrade();
+  }
+);
+
+// INITIAL LOAD
+renderAll();
+
+ </script>
+ </body>
+</html>
