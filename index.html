@@ -3,138 +3,293 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SwingSaathi</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#0b1020;color:#f1f5f9;font-family:Arial,sans-serif}
-header{padding:22px;background:#131c32;border-bottom:1px solid #293650}
-h1{margin:0;color:#38d9a9;font-size:27px}
-header p{color:#94a3b8;margin-bottom:0}
-main{padding:16px;max-width:850px;margin:auto}
-.card{background:#151f35;border:1px solid #293650;border-radius:14px;padding:16px;margin-bottom:16px}
-h2{font-size:18px;margin-top:0}
-.market{display:flex;gap:12px}
-.market .card{flex:1;margin:0}
-.price{font-size:22px;font-weight:bold;margin:10px 0}
-.green{color:#38d9a9}
-input{width:100%;padding:12px;background:#0b1020;color:white;border:1px solid #3b4b68;border-radius:8px;margin:7px 0 14px;font-size:16px}
-button{background:#38d9a9;color:#07131a;border:0;padding:12px 17px;border-radius:8px;font-weight:bold;cursor:pointer}
-table{width:100%;border-collapse:collapse}
-td,th{text-align:left;padding:12px 5px;border-bottom:1px solid #293650}
-th{color:#94a3b8;font-size:13px}
-.small{color:#94a3b8;font-size:12px}
-footer{text-align:center;color:#64748b;padding:20px}
+body{
+ margin:0;
+ background:#f5f8f6;
+ color:#20332a;
+ font-family:Arial,sans-serif;
+}
+header{
+ background:white;
+ padding:18px;
+ font-size:23px;
+ font-weight:bold;
+ color:#00a878;
+ border-bottom:1px solid #e5eee8;
+}
+main{
+ max-width:900px;
+ margin:auto;
+ padding:16px 14px 90px;
+}
+h2{font-size:19px}
+.card{
+ background:white;
+ border:1px solid #e3ece6;
+ border-radius:14px;
+ padding:16px;
+ margin:12px 0;
+}
+.balance{
+ background:#009b70;
+ color:white;
+}
+.big{
+ font-size:28px;
+ font-weight:bold;
+ margin:12px 0;
+}
+.muted{font-size:12px;color:#829087}
+.balance .muted{color:#d7fff0}
+.grid{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:10px;
+}
+.stat{font-size:19px;font-weight:bold;margin-top:8px}
+.green{color:#009b70}
+.red{color:#df4f5c}
+button{
+ border:0;
+ border-radius:9px;
+ padding:11px 14px;
+ font-weight:bold;
+ cursor:pointer;
+}
+.buy{background:#009b70;color:white}
+.sell{background:#fff0f0;color:#df4f5c}
+input{
+ width:100%;
+ padding:12px;
+ border:1px solid #dce7e0;
+ border-radius:9px;
+ margin:8px 0 14px;
+ font-size:15px;
+}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td,th{
+ text-align:left;
+ padding:12px 5px;
+ border-bottom:1px solid #edf1ee;
+}
+th{color:#829087}
+.scroll{overflow-x:auto}
+.page{display:none}
+.page.active{display:block}
+nav{
+ position:fixed;
+ bottom:0;
+ left:0;
+ right:0;
+ background:white;
+ border-top:1px solid #e3ece6;
+ display:flex;
+ justify-content:space-around;
+ padding:9px 2px;
+}
+nav button{background:white;color:#748078;font-size:11px}
+nav button.active{color:#009b70}
+.notice{
+ background:#fff8e6;
+ color:#80601a;
+ padding:12px;
+ border-radius:9px;
+ font-size:12px;
+ line-height:1.5;
+}
+@media(min-width:650px){
+ .grid{grid-template-columns:repeat(4,1fr)}
+}
 </style>
 </head>
 <body>
-
-<header>
-<h1>📈 SwingSaathi</h1>
-<p>Your Stock Market Analysis Companion</p>
-</header>
-
+<header>📈 SwingSaathi</header>
 <main>
-
-<div class="card">
-<strong>⚠️ DEMO MODE</strong>
-<p class="small">Prices shown below are fictional demo values, not live NSE/BSE prices. This app does not provide investment advice.</p>
+<div class="notice">
+ DEMO MODE: Prices are sample values, not live NSE/BSE prices.
+ All trades use virtual money only.
 </div>
-
-<h2>Market Overview</h2>
-<div class="market">
-<div class="card">
-<div class="small">NIFTY 50</div>
-<div class="price">26,000</div>
-<span class="green">+0.45% (Demo)</span>
+<section id="home" class="page active">
+<h2>Welcome to SwingSaathi 👋</h2>
+<div class="card balance">
+ <div class="muted">Virtual Wallet Balance</div>
+ <div class="big" id="cash">₹10,00,000</div>
+ <div class="muted">Starting capital: ₹10 lakh</div>
 </div>
-<div class="card">
-<div class="small">SENSEX</div>
-<div class="price">85,000</div>
-<span class="green">+0.32% (Demo)</span>
+<div class="grid">
+ <div class="card">
+  <div class="muted">Invested</div>
+  <div class="stat" id="invested">₹0</div>
+ </div>
+ <div class="card">
+  <div class="muted">Portfolio Value</div>
+  <div class="stat" id="portfolio">₹0</div>
+ </div>
+ <div class="card">
+  <div class="muted">Total P&L</div>
+  <div class="stat" id="pnl">₹0</div>
+ </div>
+ <div class="card">
+  <div class="muted">Holdings</div>
+  <div class="stat" id="count">0</div>
+ </div>
 </div>
-</div>
-
-<div class="card" style="margin-top:16px">
-<h2>🔍 Stock Watchlist</h2>
-<input id="search" placeholder="Search stock..." oninput="filterStocks()">
+<h2>Market Watch</h2>
+<div class="card scroll">
 <table>
-<thead>
-<tr><th>Stock</th><th>Demo Price</th><th>Change</th></tr>
-</thead>
-<tbody id="stocks">
-<tr><td>RELIANCE</td><td>1450</td><td class="green">+1.2%</td></tr>
-<tr><td>HAL</td><td>4200</td><td class="green">+2.1%</td></tr>
-<tr><td>SBIN</td><td>850</td><td class="green">+0.8%</td></tr>
-<tr><td>TCS</td><td>3200</td><td style="color:#fb7185">-0.5%</td></tr>
-<tr><td>INFY</td><td>1550</td><td class="green">+0.7%</td></tr>
-<tr><td>BHARTIARTL</td><td>1900</td><td class="green">+0.4%</td></tr>
-</tbody>
+<thead><tr><th>STOCK</th><th>PRICE</th><th>ACTION</th></tr></thead>
+<tbody id="homeStocks"></tbody>
 </table>
 </div>
-
+</section>
+<section id="market" class="page">
+<h2>Explore Stocks</h2>
 <div class="card">
-<h2>🧮 Swing Trade Calculator</h2>
-<label>Entry Price (₹)</label>
-<input type="number" id="entry" placeholder="Example: 100">
-<label>Stop Loss (₹)</label>
-<input type="number" id="stop" placeholder="Example: 95">
-<label>Target Price (₹)</label>
-<input type="number" id="target" placeholder="Example: 110">
-<label>Quantity</label>
-<input type="number" id="qty" placeholder="Example: 10">
-<button onclick="calculate()">Calculate</button>
-<div id="result" style="margin-top:15px"></div>
+<input id="search" placeholder="Search stocks..." oninput="renderMarket()">
+<div class="scroll">
+<table>
+<thead><tr><th>STOCK</th><th>PRICE</th><th>ACTION</th></tr></thead>
+<tbody id="marketStocks"></tbody>
+</table>
 </div>
-
+</div>
+</section>
+<section id="portfolioPage" class="page">
+<h2>My Portfolio</h2>
 <div class="card">
-<h2>📚 Trading Tools</h2>
-<p>• RSI (Relative Strength Index)</p>
-<p>• 50 DMA / 200 DMA</p>
-<p>• EMA and trend analysis</p>
-<p>• Volume breakout scanner</p>
-<p>• Paper trading</p>
-<p class="small">These are planned features, not yet connected to live market data.</p>
+ <div class="muted">Current Holdings Value</div>
+ <div class="big" id="holdingValue">₹0</div>
+ <div class="scroll">
+ <table>
+ <thead>
+ <tr>
+ <th>STOCK</th>
+ <th>QTY</th>
+ <th>AVG</th>
+ <th>P&L</th>
+ <th>SELL</th>
+ </tr>
+ </thead>
+ <tbody id="holdings"></tbody>
+ </table>
+ </div>
 </div>
+</section>
+
+<section id="historyPage" class="page">
+<h2>Trade History</h2>
+<div class="card scroll">
+<table>
+<thead>
+<tr>
+<th>DATE</th>
+<th>STOCK</th>
+<th>TYPE</th>
+<th>QTY</th>
+<th>PRICE</th>
+</tr>
+</thead>
+<tbody id="history"></tbody>
+</table>
+</div>
+</section>
+
+<section id="account" class="page">
+<h2>My Account</h2>
+<div class="card">
+<p>Account: Paper Trading</p>
+<p>Starting balance: ₹10,00,000</p>
+<p>Prices: Demo prices</p>
+<button class="sell" onclick="resetAccount()">
+Reset Account
+</button>
+</div>
+</section>
 
 </main>
 
-<footer>
-SwingSaathi © 2026 | Learn • Analyse • Improve
-</footer>
+<nav>
+<button class="active" onclick="showPage('home',this)">
+⌂<br>Home
+</button>
+<button onclick="showPage('market',this)">
+⌕<br>Market
+</button>
+<button onclick="showPage('portfolioPage',this)">
+▣<br>Portfolio
+</button>
+<button onclick="showPage('historyPage',this)">
+◷<br>History
+</button>
+<button onclick="showPage('account',this)">
+●<br>Account
+</button>
+</nav>
+
+<div id="tradeModal" style="display:none;position:fixed;inset:0;background:#0007;align-items:center;justify-content:center;padding:18px">
+<div class="card" style="width:100%;max-width:380px">
+<h2 id="tradeTitle">Buy Stock</h2>
+<p id="tradeSymbol"></p>
+<p>Demo Price: <b id="tradePrice"></b></p>
+<label>Quantity</label>
+<input id="quantity" type="number" min="1" value="1">
+<p>Order Value: <b id="orderValue">₹0</b></p>
+<button onclick="closeTrade()">Cancel</button>
+<button id="confirmTrade" class="buy" onclick="executeTrade()">Confirm Buy</button>
+</div>
+</div>
 
 <script>
-function filterStocks(){
- const q=document.getElementById("search").value.toUpperCase();
- document.querySelectorAll("#stocks tr").forEach(row=>{
-  row.style.display=row.innerText.toUpperCase().includes(q)?"":"none";
- });
+const stocks=[
+{symbol:"RELIANCE",name:"Reliance Industries",price:1450},
+{symbol:"HAL",name:"Hindustan Aeronautics",price:4200},
+{symbol:"SBIN",name:"State Bank of India",price:850},
+{symbol:"TCS",name:"Tata Consultancy Services",price:3200},
+{symbol:"INFY",name:"Infosys",price:1550},
+{symbol:"ITC",name:"ITC Limited",price:450},
+{symbol:"HDFCBANK",name:"HDFC Bank",price:1700},
+{symbol:"ICICIBANK",name:"ICICI Bank",price:1250},
+{symbol:"BHARTIARTL",name:"Bharti Airtel",price:1900},
+{symbol:"TATAMOTORS",name:"Tata Motors",price:700}
+];
+
+const START=1000000;
+let data;
+try{
+ data=JSON.parse(localStorage.getItem("ss_account"));
+}catch(e){}
+if(!data || typeof data.cash!=="number" || !data.holdings || !Array.isArray(data.history)){
+ data={cash:START,holdings:{},history:[]};
 }
 
-function calculate(){
- const e=Number(document.getElementById("entry").value);
- const s=Number(document.getElementById("stop").value);
- const t=Number(document.getElementById("target").value);
- const q=Number(document.getElementById("qty").value);
- const r=document.getElementById("result");
+let account=data;
+let selectedSymbol="";
+let tradeType="BUY";
 
- if(!e||!s||!t||!q||e<=s||t<=e){
-  r.innerHTML="<span style='color:#fb7185'>Please enter valid values. For a long trade, Stop Loss must be below Entry and Target above Entry.</span>";
-  return;
- }
-
- const risk=(e-s)*q;
- const reward=(t-e)*q;
- const ratio=(t-e)/(e-s);
-
- r.innerHTML=
- "<h3 class='green'>Calculation Result</h3>"+
- "<p>Potential Risk: ₹"+risk.toFixed(2)+"</p>"+
- "<p>Potential Reward: ₹"+reward.toFixed(2)+"</p>"+
- "<p>Risk : Reward = 1 : "+ratio.toFixed(2)+"</p>"+
- "<p class='small'>Calculation only; excludes brokerage, taxes and slippage.</p>";
+function money(n){
+ return "₹"+Number(n).toLocaleString("en-IN",{maximumFractionDigits:2});
+}
+function save(){
+ localStorage.setItem("ss_account",JSON.stringify(account));
+}
+function getStock(symbol){
+ return stocks.find(s=>s.symbol===symbol);
+}
+function holdingValue(){
+ return Object.entries(account.holdings).reduce((sum,[symbol,h])=>{
+ return sum+h.qty*getStock(symbol).price;
+ },0);
+}
+function investedValue(){
+ return Object.values(account.holdings).reduce((sum,h)=>{
+ return sum+h.qty*h.avg;
+ },0);
+}
+function profitLoss(){
+ return holdingValue()-investedValue();
 }
 </script>
-
-</body>
-</html>
