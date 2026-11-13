@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwingSaathi</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1220;color:white;font-family:Arial,sans-serif;padding:20px}
+header{display:flex;align-items:center;gap:12px;margin-bottom:25px}
+.logo{background:#16a47a;padding:12px;border-radius:12px;font-size:22px}
+h1{font-size:24px;margin:0}
+p{color:#9caac0}
+.card{background:#172438;padding:18px;border-radius:16px;margin:14px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.price{font-size:25px;font-weight:bold;margin:8px 0}
+.green{color:#29d99a}
+input,button{padding:13px;border:0;border-radius:10px;width:100%;font-size:15px}
+input{background:#25364d;color:white;margin:10px 0}
+button{background:#16a47a;color:white;font-weight:bold}
+.stock{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid #344258}
+.small{font-size:12px;color:#9caac0}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">📈</div>
+<div>
+<h1>SwingSaathi</h1>
+<div class="small">SMART STOCK ANALYSIS</div>
+</div>
+</header>
+
+<h3>Market Dashboard</h3>
+<div class="grid">
+<div class="card">
+<p>NIFTY 50</p>
+<div class="price">26,000</div>
+<span class="green">Demo Data</span>
+</div>
+<div class="card">
+<p>SENSEX</p>
+<div class="price">85,000</div>
+<span class="green">Demo Data</span>
+</div>
+</div>
+
+<div class="card">
+<h3>🔎 Find Stocks</h3>
+<input id="search" placeholder="Search stock name..." oninput="searchStocks()">
+<div id="stocks">
+<div class="stock">RELIANCE <span class="green">Watch</span></div>
+<div class="stock">HAL <span class="green">Watch</span></div>
+<div class="stock">SBIN <span class="green">Watch</span></div>
+<div class="stock">TCS <span class="green">Watch</span></div>
+<div class="stock">INFY <span class="green">Watch</span></div>
+</div>
+</div>
+
+<div class="card">
+<h3>📊 Swing Trading Calculator</h3>
+<p class="small">Demo calculation only</p>
+<input id="entry" type="number" placeholder="Entry Price">
+<input id="stop" type="number" placeholder="Stop Loss">
+<input id="target" type="number" placeholder="Target Price">
+<button onclick="calculate()">Calculate</button>
+<p id="result"></p>
+</div>
+
+<script>
+function searchStocks(){
+let q=document.getElementById('search').value.toUpperCase();
+document.querySelectorAll('#stocks .stock').forEach(s=>{
+s.style.display=s.innerText.toUpperCase().includes(q)?'flex':'none';
+});
+}
+function calculate(){
+let e=Number(document.getElementById('entry').value);
+let s=Number(document.getElementById('stop').value);
+let t=Number(document.getElementById('target').value);
+if(!e||!s||!t||s>=e||t<=e){
+document.getElementById('result').innerText='Please enter valid prices.';
+return;
+}
+document.getElementById('result').innerText=
+'Risk: ₹'+(e-s).toFixed(2)+' | Reward: ₹'+(t-e).toFixed(2)+' | Risk/Reward: 1:' + ((t-e)/(e-s)).toFixed(2);
+}
+</script>
+</body>
+</html>
