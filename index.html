@@ -4,7 +4,7 @@
 *{box-sizing:border-box}body{margin:0;background:#f5f8f6;color:#20332a;font-family:Arial,sans-serif}header{position:sticky;top:0;background:white;padding:17px;color:#009b70;font-size:22px;font-weight:bold;border-bottom:1px solid #e3ece6;z-index:4}main{max-width:1000px;margin:auto;padding:14px 14px 90px}h2{font-size:19px}.card{background:white;border:1px solid #e3ece6;border-radius:14px;padding:15px;margin:12px 0}.balance{background:#009b70;color:white}.muted{font-size:12px;color:#829087}.balance .muted{color:#d7fff0}.big{font-size:27px;font-weight:bold;margin:10px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.stat{font-size:19px;font-weight:bold;margin-top:8px}.green{color:#009b70}.red{color:#df4f5c}button{border:0;border-radius:9px;padding:10px 12px;font-weight:bold;cursor:pointer;background:#edf4ef;color:#20332a}.buy{background:#009b70;color:white}.sell{background:#fff0f0;color:#df4f5c}input{width:100%;padding:12px;border:1px solid #dce7e0;border-radius:9px;margin:8px 0 14px;font-size:15px}.scroll{overflow-x:auto}table{width:100%;min-width:560px;border-collapse:collapse;font-size:12px}td,th{text-align:left;padding:11px 7px;border-bottom:1px solid #edf1ee}th{color:#829087}.page{display:none}.page.active{display:block}nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e3ece6;display:flex;justify-content:space-around;padding:7px 1px;z-index:5}nav button{background:white;color:#748078;font-size:10px;padding:7px 5px}nav button.active{color:#009b70}.notice,.status{padding:11px;border-radius:9px;font-size:12px;line-height:1.5;margin:10px 0}.notice{background:#fff8e6;color:#80601a}.status{background:#edf7f1;color:#28734f}.modal{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:center;justify-content:center;padding:15px}.modalbox{background:white;border-radius:14px;padding:17px;width:100%;max-width:420px;max-height:90vh;overflow:auto}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{background:#f5f8f6;padding:10px;border-radius:8px}.metric b{display:block;margin-top:5px}.row{display:flex;justify-content:space-between;gap:8px;align-items:center}@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
 </style></head><body>
 <header>📈 SwingSaathi</header><main>
-<div class="notice">Paper trading only. Prices are requested from IndianAPI through your Supabase Edge Function. Data may be delayed or unavailable; it is not guaranteed real-time. Trades use virtual money only.</div><div class="status" id="apiStatus">Connecting to price service…</div>
+<div class="notice">Paper trading only. NSE Mainboard + SME stock list is loaded from official NSE files. Prices are requested from IndianAPI only for watchlist and portfolio stocks. Data may be delayed or unavailable; it is not guaranteed real-time. Trades use virtual money only.</div><div class="status" id="apiStatus">Connecting to price service…</div>
 <section id="home" class="page active"><h2>Welcome to SwingSaathi 👋</h2><div class="card balance"><div class="muted">Virtual Wallet Balance</div><div class="big" id="cash">₹10,00,000</div><div class="muted">Starting capital: ₹10 lakh</div></div>
 <div class="grid"><div class="card"><div class="muted">Invested</div><div class="stat" id="invested">₹0</div></div><div class="card"><div class="muted">Portfolio Value</div><div class="stat" id="portfolio">₹0</div></div><div class="card"><div class="muted">Total P&amp;L</div><div class="stat" id="pnl">₹0</div></div><div class="card"><div class="muted">Holdings</div><div class="stat" id="count">0</div></div></div>
 <h2>Market Watch</h2><div class="card scroll"><table><thead><tr><th>STOCK</th><th>PRICE</th><th>CHANGE</th><th>ACTION</th></tr></thead><tbody id="homeStocks"></tbody></table></div></section>
@@ -24,18 +24,7 @@ const SUPABASE_KEY="sb_publishable_CDCJAkaPYy-TdG3pPrgQ-Q_OpdVXJBk";
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 const START=1000000;
-const stocks=[
-{symbol:"RELIANCE",name:"Reliance Industries",apiName:"Reliance"},
-{symbol:"HAL",name:"Hindustan Aeronautics",apiName:"Hindustan Aeronautics"},
-{symbol:"SBIN",name:"State Bank of India",apiName:"State Bank of India"},
-{symbol:"TCS",name:"Tata Consultancy Services",apiName:"Tata Consultancy Services"},
-{symbol:"INFY",name:"Infosys",apiName:"Infosys"},
-{symbol:"ITC",name:"ITC Limited",apiName:"ITC Limited"},
-{symbol:"HDFCBANK",name:"HDFC Bank",apiName:"HDFC Bank"},
-{symbol:"ICICIBANK",name:"ICICI Bank",apiName:"ICICI Bank"},
-{symbol:"BHARTIARTL",name:"Bharti Airtel",apiName:"Bharti Airtel"},
-{symbol:"TATAMOTORS",name:"Tata Motors",apiName:"Tata Motors"}
-];
+let stocks=[];
 let account;try{account=JSON.parse(localStorage.getItem("ss_account"))}catch(e){}
 if(!account||typeof account.cash!=="number"||!account.holdings||!Array.isArray(account.history))account={cash:START,holdings:{},history:[]};
 if(!Array.isArray(account.watchlist))account.watchlist=["RELIANCE","HAL","SBIN"];
@@ -64,13 +53,49 @@ function renderHoldings(){let entries=Object.entries(account.holdings).filter(([
 function renderHistory(){$("history").innerHTML=account.history.length?[...account.history].reverse().map(t=>`<tr><td>${t.time}</td><td>${t.symbol}</td><td>${t.type}</td><td>${t.qty}</td><td>${money(t.price)}</td><td>${money(t.charges||0)}</td><td>${money(t.net||0)}</td></tr>`).join(""):'<tr><td colspan="7">No trades yet.</td></tr>'}
 function renderSummary(){let val=holdingValue(),inv=investedValue(),pl=val-inv;$("cash").textContent=money(account.cash);$("invested").textContent=money(inv);$("portfolio").textContent=money(val);$("holdingValue").textContent=money(val);$("pnl").textContent=money(pl);$("pnl").className="stat "+(pl>=0?"green":"red");$("count").textContent=Object.values(account.holdings).filter(h=>h.qty>0).length}
 function renderAll(){renderStocks();renderHoldings();renderHistory();renderSummary()}
-document.addEventListener("click",e=>{let b=e.target.closest("[data-buy]"),s=e.target.closest("[data-sell]"),a=e.target.closest("[data-add]"),r=e.target.closest("[data-remove]");if(b)openTrade(b.dataset.buy,"BUY");if(s)openTrade(s.dataset.sell,"SELL");if(a){if(!account.watchlist.includes(a.dataset.add))account.watchlist.push(a.dataset.add);save();renderAll()}if(r){account.watchlist=account.watchlist.filter(x=>x!==r.dataset.remove);save();renderAll()}});
+document.addEventListener("click",e=>{let b=e.target.closest("[data-buy]"),s=e.target.closest("[data-sell]"),a=e.target.closest("[data-add]"),r=e.target.closest("[data-remove]");if(b)openTrade(b.dataset.buy,"BUY");if(s)openTrade(s.dataset.sell,"SELL");if(a){if(!account.watchlist.includes(a.dataset.add))account.watchlist.push(a.dataset.add);save();renderAll();fetchOnePrice(a.dataset.add)}if(r){account.watchlist=account.watchlist.filter(x=>x!==r.dataset.remove);save();renderAll()}});
 function openTrade(sym,type){let s=getStock(sym);if(!s||!s.price){alert("Price unavailable. Refresh prices and try again.");return}selectedSymbol=sym;tradeType=type;$("tradeTitle").textContent=(type==="BUY"?"Buy ":"Sell ")+sym;$("tradeSymbol").textContent=s.name;$("tradePrice").textContent=money(s.price);$("quantity").value=1;$("confirmTrade").textContent="Confirm "+type;$("confirmTrade").className=type==="BUY"?"buy":"sell";$("tradeModal").style.display="flex";updateAmount()}
 function closeTrade(){$("tradeModal").style.display="none"}
 function updateAmount(){let s=getStock(selectedSymbol),q=Math.floor(Number($("quantity").value)||0),v=s&&q>0?s.price*q:0,f=fees(v,tradeType);$("orderValue").textContent=money(v);$("orderCharges").textContent=money(f);$("netValue").textContent=money(tradeType==="BUY"?v+f:v-f);$("availableCash").textContent=money(account.cash)}
 function executeTrade(){let s=getStock(selectedSymbol),q=Math.floor(Number($("quantity").value));if(!s||!Number.isInteger(q)||q<=0){alert("Enter a valid quantity.");return}let v=s.price*q,f=fees(v,tradeType),h=account.holdings[selectedSymbol]||{qty:0,avg:0};if(tradeType==="BUY"){let debit=v+f;if(debit>account.cash){alert("Insufficient virtual balance including charges.");return}let total=h.qty+q;h.avg=(h.avg*h.qty+debit)/total;h.qty=total;account.cash-=debit}else{if(q>h.qty){alert("Not enough shares to sell.");return}h.qty-=q;account.cash+=v-f}account.holdings[selectedSymbol]=h;account.history.push({symbol:selectedSymbol,type:tradeType,qty:q,price:s.price,charges:f,net:tradeType==="BUY"?v+f:v-f,time:new Date().toLocaleString("en-IN")});save();closeTrade();renderAll();alert("Paper "+tradeType+" completed. Estimated charges: "+money(f))}
-async function refreshStockPrices(){if(refreshing)return;refreshing=true;$("apiStatus").textContent="Fetching stock prices…";let ok=0,failed=0;try{for(let s of stocks){try{let {data,error}=await sb.functions.invoke("stock-price",{body:{name:s.apiName}});if(error||!data||data.error){failed++;console.warn("API failed",s.symbol,error||data);continue}let p=num(data.nsePrice)??num(data.bsePrice);if(p&&p>0){s.price=p;ok++}s.percentChange=num(data.percentChange);s.yearHigh=num(data.yearHigh);s.yearLow=num(data.yearLow)}catch(err){failed++;console.warn(err)}}renderAll();let t=new Date().toLocaleTimeString("en-IN");$("lastUpdated").textContent=t;$("apiStatus").textContent=`${ok} prices updated; ${failed} failed. Last check: ${t}`;$("apiStatus").style.background=ok?"#edf7f1":"#fff0f0";$("apiStatus").style.color=ok?"#28734f":"#a33b45"}finally{refreshing=false}}
+async function fetchOnePrice(symbol){
+ let s=getStock(symbol);if(!s)return;
+ try{
+  let {data,error}=await sb.functions.invoke("stock-price",{body:{name:s.symbol}});
+  if(error||!data||data.error){console.warn("Price unavailable",symbol,error||data);return}
+  let p=num(data.nsePrice)??num(data.bsePrice);
+  if(p&&p>0)s.price=p;
+  s.percentChange=num(data.percentChange);s.yearHigh=num(data.yearHigh);s.yearLow=num(data.yearLow);
+  renderAll();
+ }catch(err){console.warn("Price fetch failed",symbol,err)}
+}
+async function refreshStockPrices(){
+ if(refreshing)return;refreshing=true;$("apiStatus").textContent="Refreshing watchlist and portfolio prices…";
+ try{
+  let symbols=[...new Set([...account.watchlist,...Object.keys(account.holdings)])];
+  for(let symbol of symbols)await fetchOnePrice(symbol);
+  let t=new Date().toLocaleTimeString("en-IN");$("lastUpdated").textContent=t;
+  $("apiStatus").textContent=`Checked ${symbols.length} watchlist/holding stocks. Prices may be unavailable for some symbols.`;
+ }finally{refreshing=false}
+}
+async function loadNSEStocks(){
+ $("apiStatus").textContent="Downloading official NSE stock list…";
+ try{
+  const {data,error}=await sb.functions.invoke("stock-price",{body:{action:"list"}});
+  if(error)throw error;
+  if(!data||!Array.isArray(data.stocks)||!data.stocks.length)throw new Error(data?.error||"NSE list is empty");
+  stocks=data.stocks.map(x=>({symbol:x.symbol,name:x.name,series:x.series,price:null,percentChange:null,yearHigh:null,yearLow:null}));
+  renderAll();
+  $("apiStatus").textContent=`Loaded ${stocks.length.toLocaleString("en-IN")} NSE stocks (Mainboard + SME). Search by name or symbol.`;
+  $("apiStatus").style.background="#edf7f1";$("apiStatus").style.color="#28734f";
+  refreshStockPrices();
+ }catch(err){
+  console.error("NSE list error",err);
+  $("apiStatus").textContent="NSE list could not load. Check that the updated stock-price Edge Function is deployed.";
+  $("apiStatus").style.background="#fff0f0";$("apiStatus").style.color="#a33b45";
+ }
+}
 $("search").addEventListener("input",renderStocks);$("quantity").addEventListener("input",updateAmount);$("confirmTrade").addEventListener("click",executeTrade);$("closeModal").addEventListener("click",closeTrade);$("cancelTrade").addEventListener("click",closeTrade);$("tradeModal").addEventListener("click",e=>{if(e.target===$("tradeModal"))closeTrade()});$("refreshBtn").addEventListener("click",refreshStockPrices);
 $("resetBtn").addEventListener("click",()=>{if(confirm("Reset all paper trading data?")){account={cash:START,holdings:{},history:[],watchlist:["RELIANCE","HAL","SBIN"]};save();renderAll()}});
-renderAll();setTimeout(refreshStockPrices,1200);setInterval(()=>{if(document.visibilityState==="visible")refreshStockPrices()},15*60*1000);
+renderAll();loadNSEStocks();setInterval(()=>{if(document.visibilityState==="visible")refreshStockPrices()},15*60*1000);
 </script></body></html>
