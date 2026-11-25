@@ -449,7 +449,7 @@ async function refreshStockPrices() {
 
 
 // FIRST FETCH
-refreshStockPrices();
+setTimeout(refreshStockPrices, 2000);
 
 // AUTO REFRESH EVERY 15 MINUTES
 setInterval(refreshStockPrices, 15 * 60 * 1000);
