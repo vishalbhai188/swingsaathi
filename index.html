@@ -316,6 +316,8 @@ function showPage(page, btn) {
   renderAll();
 }
 
+div>
+ 
 // STOCK LIST
 function renderStocks(list, elementId) {
   const el = document.getElementById(elementId);
@@ -327,23 +329,133 @@ function renderStocks(list, elementId) {
   }
 
   el.innerHTML = list.map(function(s) {
+    const change = s.percentChange;
+
     return `
       <div class="stock-row">
         <div>
           <strong>${s.symbol}</strong>
           <div class="muted">${s.name}</div>
         </div>
+
         <div class="stock-right">
           <strong>${money(s.price)}</strong>
+          <div class="muted">
+            ${change == null
+              ? "Change unavailable"
+              : (Number(change) >= 0 ? "+" : "") +
+                Number(change).toFixed(2) + "%"}
+          </div>
           <div>
-            <button class="buy" onclick="openTrade('${s.symbol}','BUY')">Buy</button>
-            <button class="sell" onclick="openTrade('${s.symbol}','SELL')">Sell</button>
+            <button class="buy"
+              onclick="openTrade('${s.symbol}','BUY')">Buy</button>
+            <button class="sell"
+              onclick="openTrade('${s.symbol}','SELL')">Sell</button>
           </div>
         </div>
       </div>
     `;
   }).join("");
 }
+
+
+// INDIANAPI STOCK NAMES
+const apiStockNames = {
+  RELIANCE: "Reliance",
+  HAL: "Hindustan Aeronautics",
+  SBIN: "State Bank of India",
+  TCS: "Tata Consultancy Services",
+  INFY: "Infosys",
+  ITC: "ITC Limited",
+  HDFCBANK: "HDFC Bank",
+  ICICIBANK: "ICICI Bank",
+  BHARTIARTL: "Bharti Airtel",
+  TATAMOTORS: "Tata Motors"
+};
+
+
+// FETCH STOCK PRICES
+let priceRefreshRunning = false;
+
+async function refreshStockPrices() {
+  if (priceRefreshRunning) return;
+
+  priceRefreshRunning = true;
+
+  try {
+    for (const s of stocks) {
+      try {
+        const { data, error } = await sb.functions.invoke(
+          "stock-price",
+          {
+            body: {
+              name: apiStockNames[s.symbol] || s.name
+            }
+          }
+        );
+
+        if (error) {
+          console.error("Price error:", s.symbol, error);
+          continue;
+        }
+
+        if (!data || data.error) {
+          console.error("API error:", s.symbol, data);
+          continue;
+        }
+
+        const rawPrice = data.nsePrice ?? data.bsePrice;
+
+        const price = Number(
+          String(rawPrice ?? "")
+            .replace(/,/g, "")
+            .replace(/[₹\s]/g, "")
+        );
+
+        if (Number.isFinite(price) && price > 0) {
+          s.price = price;
+        }
+
+        if (data.percentChange != null) {
+          const pct = Number(
+            String(data.percentChange)
+              .replace("%", "")
+              .replace("+", "")
+              .trim()
+          );
+
+          if (Number.isFinite(pct)) {
+            s.percentChange = pct;
+          }
+        }
+
+      } catch (err) {
+        console.error("Stock fetch failed:", s.symbol, err);
+      }
+    }
+
+    if (typeof renderAll === "function") {
+      renderAll();
+    } else {
+      renderStocks(stocks, "homeStocks");
+      renderStocks(stocks, "marketStocks");
+    }
+
+    console.log("SwingSaathi prices refreshed");
+
+  } finally {
+    priceRefreshRunning = false;
+  }
+}
+
+
+// FIRST FETCH
+refreshStockPrices();
+
+// AUTO REFRESH EVERY 15 MINUTES
+setInterval(refreshStockPrices, 15 * 60 * 1000);
+                     
+   
 
 // PORTFOLIO
 function renderHoldings() {
