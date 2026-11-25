@@ -3,719 +3,255 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SwingSaathi</title>
-
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f5f8f6;color:#20332a;font-family:Arial,sans-serif}
-header{position:sticky;top:0;background:white;padding:17px;color:#009b70;font-size:22px;font-weight:bold;border-bottom:1px solid #e3ece6;z-index:4}
-main{max-width:1000px;margin:auto;padding:14px 14px 90px}
-h2{font-size:19px}
-.card{background:white;border:1px solid #e3ece6;border-radius:14px;padding:15px;margin:12px 0}
-.balance{background:#009b70;color:white}
-.muted{font-size:12px;color:#829087}
-.balance .muted{color:#d7fff0}
-.big{font-size:27px;font-weight:bold;margin:10px 0}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
-.stat{font-size:19px;font-weight:bold;margin-top:8px}
-.green{color:#009b70}
-.red{color:#df4f5c}
-button{border:0;border-radius:9px;padding:10px 12px;font-weight:bold;cursor:pointer;background:#edf4ef;color:#20332a}
-button:disabled{opacity:.5;cursor:not-allowed}
-.buy{background:#009b70;color:white}
-.sell{background:#fff0f0;color:#df4f5c}
-input{width:100%;padding:12px;border:1px solid #dce7e0;border-radius:9px;margin:8px 0 14px;font-size:15px}
-.scroll{overflow-x:auto}
-table{width:100%;min-width:560px;border-collapse:collapse;font-size:12px}
-td,th{text-align:left;padding:11px 7px;border-bottom:1px solid #edf1ee}
-th{color:#829087}
-.page{display:none}
-.page.active{display:block}
-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e3ece6;display:flex;justify-content:space-around;padding:7px 1px;z-index:5}
-nav button{background:white;color:#748078;font-size:10px;padding:7px 5px}
-nav button.active{color:#009b70}
-.notice,.status{padding:11px;border-radius:9px;font-size:12px;line-height:1.5;margin:10px 0}
-.notice{background:#fff8e6;color:#80601a}
-.status{background:#edf7f1;color:#28734f}
-.status.error{background:#fff0f0;color:#a33b45}
-.modal{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:center;justify-content:center;padding:15px}
-.modalbox{background:white;border-radius:14px;padding:17px;width:100%;max-width:420px;max-height:90vh;overflow:auto}
-.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.metric{background:#f5f8f6;padding:10px;border-radius:8px}
-.metric b{display:block;margin-top:5px}
-.row{display:flex;justify-content:space-between;gap:8px;align-items:center}
-@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
+header{background:#fff;padding:17px;border-bottom:1px solid #e4ebe6;position:sticky;top:0;z-index:5}
+header h2{margin:0;color:#16834c}
+main{padding:15px;max-width:850px;margin:auto;padding-bottom:90px}
+.card{background:white;border:1px solid #e5ece7;border-radius:14px;padding:15px;margin-bottom:14px}
+.muted{color:#718078;font-size:13px}
+.green{color:#13864b}
+.red{color:#d44848}
+nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e5ece7;display:flex;justify-content:space-around;padding:10px 2px;z-index:10}
+nav button{border:0;background:none;color:#64746a;font-size:12px;padding:7px 3px}
+nav button.active{color:#13864b;font-weight:bold}
+button,.btn{border:0;border-radius:9px;padding:10px 14px;background:#16834c;color:white;font-weight:bold;cursor:pointer}
+button.secondary{background:#edf5ef;color:#16834c}
+input{width:100%;padding:12px;border:1px solid #dce5df;border-radius:9px;margin:8px 0}
+.stock{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #edf1ee}
+.stock:last-child{border:0}
+.stock strong{font-size:15px}
+.stock small{display:block;color:#758078;margin-top:5px}
+.price{text-align:right;font-weight:bold}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.metric{background:#f4f8f5;padding:10px;border-radius:9px}
+.metric small{display:block;color:#748078;font-size:11px}
+.metric b{font-size:13px}
+.actions{display:flex;gap:8px;margin-top:12px}
+.actions button{flex:1}
+.hidden{display:none}
 </style>
 </head>
-
 <body>
-
-<header>📈 SwingSaathi</header>
-
+<header><h2>📈 SwingSaathi</h2><div class="muted">Your stock market practice companion</div></header>
 <main>
-
-<div class="notice">
-Paper trading only. NSE Mainboard + SME stock list is loaded from NSE files.
-Prices are requested from IndianAPI for watchlist and portfolio stocks.
-Data may be delayed or unavailable. Prices are not guaranteed real-time.
-All trades use virtual money only.
-</div>
-
-<div class="status" id="apiStatus">Connecting to price service...</div>
-
-<section id="home" class="page active">
-<h2>Welcome to SwingSaathi 👋</h2>
-
-<div class="card balance">
-<div class="muted">Virtual Wallet Balance</div>
-<div class="big" id="cash">₹10,00,000</div>
-<div class="muted">Starting capital: ₹10 lakh</div>
-</div>
-
-<div class="grid">
-<div class="card"><div class="muted">Invested</div><div class="stat" id="invested">₹0</div></div>
-<div class="card"><div class="muted">Portfolio Value</div><div class="stat" id="portfolio">₹0</div></div>
-<div class="card"><div class="muted">Total P&L</div><div class="stat" id="pnl">₹0</div></div>
-<div class="card"><div class="muted">Holdings</div><div class="stat" id="count">0</div></div>
-</div>
-
-<h2>Market Watch</h2>
-<div class="card scroll">
-<table>
-<thead><tr><th>STOCK</th><th>PRICE</th><th>CHANGE</th><th>ACTION</th></tr></thead>
-<tbody id="homeStocks"></tbody>
-</table>
-</div>
-</section>
-
-<section id="market" class="page">
-<h2>Explore Stocks</h2>
+<section id="home">
 <div class="card">
-<input id="search" placeholder="Search company or symbol...">
-<div class="scroll">
-<table>
-<thead>
-<tr>
-<th>STOCK</th><th>PRICE</th><th>CHANGE</th>
-<th>52W HIGH</th><th>52W LOW</th><th>ACTION</th><th></th>
-</tr>
-</thead>
-<tbody id="marketStocks"></tbody>
-</table>
-</div>
-</div>
-</section>
-
-<section id="watchlistPage" class="page">
-<h2>My Watchlist</h2>
-<div class="card">
-<p class="muted">Add stocks from Market or remove them here.</p>
-<div class="scroll">
-<table>
-<thead><tr><th>STOCK</th><th>PRICE</th><th>CHANGE</th><th>ACTION</th><th></th></tr></thead>
-<tbody id="watchlistStocks"></tbody>
-</table>
-</div>
-</div>
-</section>
-
-<section id="portfolioPage" class="page">
-<h2>My Portfolio</h2>
-<div class="card">
-<div class="muted">Current Holdings Value</div>
-<div class="big" id="holdingValue">₹0</div>
-<div class="scroll">
-<table>
-<thead>
-<tr><th>STOCK</th><th>QTY</th><th>AVG</th><th>LTP</th><th>P&L</th><th>SELL</th></tr>
-</thead>
-<tbody id="holdings"></tbody>
-</table>
-</div>
-</div>
-</section>
-
-<section id="historyPage" class="page">
-<h2>Trade History</h2>
-<div class="card scroll">
-<table>
-<thead>
-<tr><th>DATE</th><th>STOCK</th><th>TYPE</th><th>QTY</th><th>PRICE</th><th>CHARGES</th><th>NET</th></tr>
-</thead>
-<tbody id="history"></tbody>
-</table>
-</div>
-</section>
-
-<section id="account" class="page">
-<h2>My Account</h2>
-<div class="card">
-<p>Account: Paper Trading</p>
-<p>Starting balance: ₹10,00,000</p>
-<p class="muted">Last successful refresh: <span id="lastUpdated">Not yet</span></p>
-<button class="buy" id="refreshBtn">Refresh prices now</button>
-<button class="sell" id="resetBtn">Reset Account</button>
+<h3>Paper Trading Balance</h3>
+<h2 id="balance">₹10,00,000</h2>
+<div class="muted">Virtual money · Not real investments</div>
 </div>
 <div class="card">
-<b>Estimated delivery charges</b>
-<p class="muted">
-Illustrative estimates, not a broker contract note.
-Actual charges vary by broker, exchange and current rules.
-</p>
+<h3>Market Overview</h3>
+<div id="marketStatus" class="muted">Loading stocks...</div>
+</div>
+<div class="card"><h3>Watchlist</h3><div id="homeStocks"></div></div>
+</section>
+
+<section id="market" class="hidden">
+<div class="card">
+<h3>NSE Market</h3>
+<input id="search" placeholder="Search stock name or symbol..." oninput="renderMarket()">
+<div id="marketStatus2" class="muted"></div>
+<div id="marketStocks"></div>
 </div>
 </section>
 
+<section id="watchlist" class="hidden">
+<div class="card"><h3>My Watchlist</h3><div id="watchStocks"></div></div>
+</section>
+
+<section id="portfolio" class="hidden">
+<div class="card"><h3>My Portfolio</h3><div id="portfolioStocks"></div></div>
+</section>
+
+<section id="history" class="hidden">
+<div class="card"><h3>Trade History</h3><div id="historyList"></div></div>
+</section>
+
+<section id="account" class="hidden">
+<div class="card">
+<h3>Account</h3>
+<p class="muted">SwingSaathi Paper Trading</p>
+<p>Virtual starting balance: ₹10,00,000</p>
+<button class="secondary" onclick="resetAccount()">Reset paper account</button>
+</div>
+</section>
 </main>
 
 <nav>
-<button class="active" data-page="home">⌂<br>Home</button>
-<button data-page="market">⌕<br>Market</button>
-<button data-page="watchlistPage">☆<br>Watchlist</button>
-<button data-page="portfolioPage">▣<br>Portfolio</button>
-<button data-page="historyPage">◷<br>History</button>
-<button data-page="account">●<br>Account</button>
+<button class="active" onclick="showTab('home',this)">Home</button>
+<button onclick="showTab('market',this)">Market</button>
+<button onclick="showTab('watchlist',this)">Watchlist</button>
+<button onclick="showTab('portfolio',this)">Portfolio</button>
+<button onclick="showTab('history',this)">History</button>
+<button onclick="showTab('account',this)">Account</button>
 </nav>
 
-<div class="modal" id="tradeModal">
-<div class="modalbox">
-<div class="row">
-<h2 id="tradeTitle">Buy Stock</h2>
-<button id="closeModal">✕</button>
-</div>
-<p id="tradeSymbol"></p>
-<p>Price: <b id="tradePrice"></b></p>
-<label>Quantity</label>
-<input id="quantity" type="number" min="1" step="1" value="1">
-
-<div class="metrics">
-<div class="metric"><span class="muted">Order value</span><b id="orderValue">₹0</b></div>
-<div class="metric"><span class="muted">Estimated charges</span><b id="orderCharges">₹0</b></div>
-<div class="metric"><span class="muted">Total debit / credit</span><b id="netValue">₹0</b></div>
-<div class="metric"><span class="muted">Available cash</span><b id="availableCash">₹0</b></div>
-</div>
-
-<p class="muted">Charges are estimates for a delivery-style paper trade only.</p>
-<div class="row">
-<button id="cancelTrade">Cancel</button>
-<button class="buy" id="confirmTrade">Confirm Buy</button>
-</div>
-</div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
-"use strict";
+const SUPABASE_URL="https://qhzfljnehytwbuwzhswg.supabase.co";
+const SUPABASE_KEY="sb_publishable_CDCJAkaPYy-TdG3pPrgQ-Q_OpdVXJBk";
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const SUPABASE_URL = "https://qhzfljnehytwbuwzhswg.supabase.co";
-const SUPABASE_KEY = "sb_publishable_CDCJAkaPYy-TdG3pPrgQ-Q_OpdVXJBk";
+let stocks=[];
+let watchlist=JSON.parse(localStorage.getItem("ss_watch")||'["RELIANCE","HAL","SBIN"]');
+let account=JSON.parse(localStorage.getItem("ss_account")||'{"cash":1000000,"holdings":{},"history":[]}');
 
-const sb = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
-
-const START = 1000000;
-let stocks = [];
-let selectedSymbol = "";
-let tradeType = "BUY";
-let refreshing = false;
-
-const $ = id => document.getElementById(id);
-
-let account;
-
-try {
-  account = JSON.parse(localStorage.getItem("ss_account"));
-} catch (e) {
-  account = null;
+function save(){
+ localStorage.setItem("ss_watch",JSON.stringify(watchlist));
+ localStorage.setItem("ss_account",JSON.stringify(account));
 }
-
-if (
-  !account ||
-  typeof account.cash !== "number" ||
-  !account.holdings ||
-  !Array.isArray(account.history)
-) {
-  account = {
-    cash: START,
-    holdings: {},
-    history: [],
-    watchlist: ["RELIANCE", "HAL", "SBIN"]
-  };
+function money(n){
+ return n==null||!Number.isFinite(Number(n))?"—":"₹"+Number(n).toLocaleString("en-IN",{maximumFractionDigits:2});
 }
-
-if (!Array.isArray(account.watchlist)) {
-  account.watchlist = ["RELIANCE", "HAL", "SBIN"];
+function val(o,keys){
+ for(const k of keys){
+  if(o && o[k]!==undefined && o[k]!==null && o[k]!==""){
+   const n=Number(String(o[k]).replace(/[₹,% ,]/g,""));
+   if(Number.isFinite(n))return n;
+  }
+ }
+ return null;
 }
-
-function money(n) {
-  return "₹" + (Number(n) || 0).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+function normalizePrice(data){
+ const d=data?.data||data?.stock||data?.result||data||{};
+ return {
+  price:val(d,["nsePrice","lastPrice","currentPrice","ltp","price","close"]),
+  high:val(d,["yearHigh","52WeekHigh","high52","high"]),
+  low:val(d,["yearLow","52WeekLow","low52","low"]),
+  change:val(d,["percentChange","pChange","changePercent","percentageChange"])
+ };
 }
-
-function num(v) {
-  if (v === null || v === undefined || v === "") return null;
-
-  const n = Number(
-    String(v)
-      .replace(/,/g, "")
-      .replace(/[₹%\s]/g, "")
-      .replace(/^\+/, "")
-  );
-
-  return Number.isFinite(n) ? n : null;
+async function fetchPrice(stock){
+ try{
+  const {data,error}=await sb.functions.invoke("stock-price",{body:{name:stock.name}});
+  if(error)throw error;
+  if(!data||data.success===false)throw new Error(data?.error||"No price data");
+  const p=normalizePrice(data);
+  stock.price=p.price;
+  stock.yearHigh=p.high;
+  stock.yearLow=p.low;
+  stock.change=p.change;
+  stock.priceError=p.price===null;
+  return p.price!==null;
+ }catch(e){
+  console.error("Price error:",stock.symbol,e);
+  stock.priceError=true;
+  return false;
+ }
 }
-
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
-}
-
-function save() {
-  localStorage.setItem("ss_account", JSON.stringify(account));
-}
-
-function getStock(symbol) {
-  return stocks.find(s => s.symbol === symbol);
-}
-
-function setStatus(message, isError = false) {
-  $("apiStatus").textContent = message;
-  $("apiStatus").className = isError ? "status error" : "status";
-}
-
-function holdingValue() {
-  return Object.entries(account.holdings).reduce((total, [symbol, h]) => {
-    const stock = getStock(symbol);
-    const price = stock?.price ?? h.avg;
-    return total + price * h.qty;
-  }, 0);
-}
-
-function investedValue() {
-  return Object.values(account.holdings).reduce(
-    (total, h) => total + h.qty * h.avg,
-    0
-  );
-}
-
-function fees(value, side) {
-  const stt = value * 0.001;
-  const exchange = value * 0.0000297;
-  const sebi = value * 0.000001;
-  const stamp = side === "BUY" ? value * 0.00015 : 0;
-  const gst = (exchange + sebi) * 0.18;
-
-  return stt + exchange + sebi + stamp + gst;
-}
-
-function showPage(id) {
-  document.querySelectorAll(".page").forEach(page => {
-    page.classList.toggle("active", page.id === id);
-  });
-
-  document.querySelectorAll("nav button").forEach(button => {
-    button.classList.toggle("active", button.dataset.page === id);
-  });
-
+async function loadStocks(){
+ document.getElementById("marketStatus").textContent="Loading NSE stock list...";
+ try{
+  const {data,error}=await sb.functions.invoke("stock-price",{body:{action:"list"}});
+  if(error)throw error;
+  const list=Array.isArray(data)?data:(data?.stocks||data?.data||[]);
+  if(!list.length)throw new Error("Stock list empty");
+  stocks=list.map(s=>({
+   symbol:s.symbol||s.Symbol,
+   name:s.name||s.companyName||s.NAME||s.symbol,
+   price:null,yearHigh:null,yearLow:null,change:null
+  })).filter(s=>s.symbol);
+  document.getElementById("marketStatus").textContent=stocks.length+" NSE stocks loaded";
+  document.getElementById("marketStatus2").textContent=stocks.length+" stocks loaded";
   renderAll();
+  await refreshPrices();
+ }catch(e){
+  console.error(e);
+  document.getElementById("marketStatus").textContent="Stock list error: "+e.message;
+ }
 }
-
-document.querySelectorAll("nav button").forEach(button => {
-  button.addEventListener("click", () => showPage(button.dataset.page));
-});
-
-function changeText(stock) {
-  if (stock.percentChange === null || stock.percentChange === undefined) {
-    return "—";
-  }
-
-  const value = Number(stock.percentChange);
-
-  return `<span class="${value >= 0 ? "green" : "red"}">
-    ${value >= 0 ? "+" : ""}${value.toFixed(2)}%
-  </span>`;
+async function refreshPrices(){
+ const needed=[...new Set([...watchlist,...Object.keys(account.holdings)])];
+ let count=0;
+ for(const symbol of needed){
+  const s=stocks.find(x=>x.symbol===symbol);
+  if(s && await fetchPrice(s))count++;
+  renderAll();
+ }
+ document.getElementById("marketStatus").textContent=
+ "Prices updated for "+count+" stocks · Refresh: 15 min";
+ renderAll();
 }
-
-function actionButtons(stock) {
-  const symbol = escapeHTML(stock.symbol);
-
-  return `
-    <button class="buy" data-buy="${symbol}">Buy</button>
-    <button class="sell" data-sell="${symbol}">Sell</button>
-  `;
+function stockHTML(s){
+ const change=s.change;
+ return `<div class="stock">
+ <div><strong>${escapeHTML(s.symbol)}</strong><small>${escapeHTML(s.name)}</small>
+ <small>52W High: ${money(s.yearHigh)} · Low: ${money(s.yearLow)}</small></div>
+ <div class="price">${money(s.price)}
+ <small class="${change>=0?'green':'red'}">${change===null?'':(change>0?'+':'')+change.toFixed(2)+'%'}</small>
+ <small>${s.priceError?'Price unavailable':''}</small></div></div>`;
 }
-
-function stockRow(stock, market = false) {
-  const symbol = escapeHTML(stock.symbol);
-  const name = escapeHTML(stock.name);
-
-  return `
-    <tr>
-      <td><b>${symbol}</b><div class="muted">${name}</div></td>
-      <td>${stock.price !== null ? money(stock.price) : "—"}</td>
-      <td>${changeText(stock)}</td>
-      ${market ? `
-        <td>${stock.yearHigh !== null ? money(stock.yearHigh) : "—"}</td>
-        <td>${stock.yearLow !== null ? money(stock.yearLow) : "—"}</td>
-      ` : ""}
-      <td>${actionButtons(stock)}</td>
-      ${market ? `<td><button data-add="${symbol}">+ Watch</button></td>` : ""}
-    </tr>
-  `;
+function escapeHTML(x){
+ return String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
-
-function renderStocks() {
-  $("homeStocks").innerHTML = stocks.slice(0, 20).map(stock => stockRow(stock)).join("");
-
-  const query = $("search").value.trim().toLowerCase();
-
-  const found = stocks.filter(stock =>
-    stock.symbol.toLowerCase().includes(query) ||
-    stock.name.toLowerCase().includes(query)
-  ).slice(0, 200);
-
-  $("marketStocks").innerHTML = found.length
-    ? found.map(stock => stockRow(stock, true)).join("")
-    : `<tr><td colspan="7">No matching stocks found.</td></tr>`;
-
-  const watchlist = stocks.filter(stock =>
-    account.watchlist.includes(stock.symbol)
-  );
-
-  $("watchlistStocks").innerHTML = watchlist.length
-    ? watchlist.map(stock => `
-      <tr>
-        <td><b>${escapeHTML(stock.symbol)}</b><div class="muted">${escapeHTML(stock.name)}</div></td>
-        <td>${stock.price !== null ? money(stock.price) : "—"}</td>
-        <td>${changeText(stock)}</td>
-        <td>${actionButtons(stock)}</td>
-        <td><button data-remove="${escapeHTML(stock.symbol)}">Remove</button></td>
-      </tr>
-    `).join("")
-    : `<tr><td colspan="5">Watchlist is empty.</td></tr>`;
+function renderMarket(){
+ const q=(document.getElementById("search").value||"").toLowerCase();
+ const list=stocks.filter(s=>s.symbol.toLowerCase().includes(q)||s.name.toLowerCase().includes(q)).slice(0,200);
+ document.getElementById("marketStocks").innerHTML=list.map(s=>`
+ <div class="card">${stockHTML(s)}
+ <div class="actions">
+ <button class="secondary" onclick="toggleWatch('${escapeHTML(s.symbol)}')">${watchlist.includes(s.symbol)?"Remove Watchlist":"Add Watchlist"}</button>
+ <button onclick="trade('${escapeHTML(s.symbol)}','buy')">Buy</button>
+ </div></div>`).join("")||"No stocks found";
 }
-
-function renderHoldings() {
-  const entries = Object.entries(account.holdings).filter(([, h]) => h.qty > 0);
-
-  $("holdings").innerHTML = entries.length
-    ? entries.map(([symbol, h]) => {
-        const price = getStock(symbol)?.price ?? h.avg;
-        const profitLoss = (price - h.avg) * h.qty;
-
-        return `
-          <tr>
-            <td>${escapeHTML(symbol)}</td>
-            <td>${h.qty}</td>
-            <td>${money(h.avg)}</td>
-            <td>${money(price)}</td>
-            <td class="${profitLoss >= 0 ? "green" : "red"}">${money(profitLoss)}</td>
-            <td><button class="sell" data-sell="${escapeHTML(symbol)}">Sell</button></td>
-          </tr>
-        `;
-      }).join("")
-    : `<tr><td colspan="6">No holdings yet.</td></tr>`;
+function renderAll(){
+ const watched=stocks.filter(s=>watchlist.includes(s.symbol));
+ document.getElementById("homeStocks").innerHTML=watched.map(stockHTML).join("")||"No watchlist stocks";
+ document.getElementById("watchStocks").innerHTML=watched.map(s=>`
+ <div class="card">${stockHTML(s)}
+ <button class="secondary" onclick="toggleWatch('${escapeHTML(s.symbol)}')">Remove</button>
+ <button onclick="trade('${escapeHTML(s.symbol)}','buy')">Buy</button></div>`).join("")||"No stocks in watchlist";
+ document.getElementById("balance").textContent=money(account.cash);
+ document.getElementById("portfolioStocks").innerHTML=Object.entries(account.holdings).filter(([k,v])=>v.qty>0).map(([symbol,h])=>{
+ const s=stocks.find(x=>x.symbol===symbol);
+ return `<div class="card"><b>${escapeHTML(symbol)}</b><p>Quantity: ${h.qty}</p><p>Average: ${money(h.avg)}</p><p>Current: ${money(s?.price)}</p><button onclick="trade('${escapeHTML(symbol)}','sell')">Sell</button></div>`;
+ }).join("")||"No holdings";
+ document.getElementById("historyList").innerHTML=account.history.slice().reverse().map(t=>
+ `<div class="stock"><div><b>${t.side.toUpperCase()} ${escapeHTML(t.symbol)}</b><small>${escapeHTML(t.date)}</small></div><div>${t.qty} × ${money(t.price)}</div></div>`
+ ).join("")||"No trades yet";
+ if(!document.getElementById("market").classList.contains("hidden"))renderMarket();
 }
-
-function renderHistory() {
-  $("history").innerHTML = account.history.length
-    ? [...account.history].reverse().map(trade => `
-      <tr>
-        <td>${escapeHTML(trade.time)}</td>
-        <td>${escapeHTML(trade.symbol)}</td>
-        <td>${escapeHTML(trade.type)}</td>
-        <td>${trade.qty}</td>
-        <td>${money(trade.price)}</td>
-        <td>${money(trade.charges || 0)}</td>
-        <td>${money(trade.net || 0)}</td>
-      </tr>
-    `).join("")
-    : `<tr><td colspan="7">No trades yet.</td></tr>`;
+function toggleWatch(symbol){
+ watchlist=watchlist.includes(symbol)?watchlist.filter(x=>x!==symbol):[...watchlist,symbol];
+ save();renderAll();
 }
-
-function renderSummary() {
-  const value = holdingValue();
-  const invested = investedValue();
-  const profitLoss = value - invested;
-
-  $("cash").textContent = money(account.cash);
-  $("invested").textContent = money(invested);
-  $("portfolio").textContent = money(value);
-  $("holdingValue").textContent = money(value);
-  $("pnl").textContent = money(profitLoss);
-  $("pnl").className = "stat " + (profitLoss >= 0 ? "green" : "red");
-
-  $("count").textContent = Object.values(account.holdings)
-    .filter(h => h.qty > 0).length;
+function trade(symbol,side){
+ const s=stocks.find(x=>x.symbol===symbol);
+ if(!s||!s.price){alert("Price unavailable. Try refreshing prices first.");return;}
+ const qty=Number(prompt("Enter quantity for "+side+" "+symbol));
+ if(!Number.isInteger(qty)||qty<=0)return;
+ if(side==="buy"){
+  const cost=qty*s.price;
+  if(cost>account.cash){alert("Insufficient virtual cash");return;}
+  const h=account.holdings[symbol]||{qty:0,avg:0};
+  h.avg=(h.avg*h.qty+cost)/(h.qty+qty);
+  h.qty+=qty;account.holdings[symbol]=h;account.cash-=cost;
+ }else{
+  const h=account.holdings[symbol];
+  if(!h||h.qty<qty){alert("Not enough shares");return;}
+  h.qty-=qty;account.cash+=qty*s.price;
+ }
+ account.history.push({symbol,side,qty,price:s.price,date:new Date().toLocaleString("en-IN")});
+ save();renderAll();
 }
-
-function renderAll() {
-  renderStocks();
-  renderHoldings();
-  renderHistory();
-  renderSummary();
+function resetAccount(){
+ if(!confirm("Reset all paper trading data?"))return;
+ account={cash:1000000,holdings:{},history:[]};save();renderAll();
 }
-
-// Fetch price from Supabase Edge Function.
-// IMPORTANT: use company name, not only NSE symbol.
-async function fetchOnePrice(symbol) {
-  const stock = getStock(symbol);
-
-  if (!stock) return false;
-
-  try {
-    const { data, error } = await sb.functions.invoke("stock-price", {
-      body: { name: stock.name }
-    });
-
-    if (error) {
-      console.error("Supabase function error:", symbol, error);
-      return false;
-    }
-
-    if (!data || data.success === false || data.error) {
-      console.error("Price API error:", symbol, data);
-      return false;
-    }
-
-    const price = num(data.nsePrice) ?? num(data.bsePrice);
-
-    if (price !== null && price > 0) {
-      stock.price = price;
-    }
-
-    const change = num(data.percentChange);
-    const high = num(data.yearHigh);
-    const low = num(data.yearLow);
-
-    if (change !== null) stock.percentChange = change;
-    if (high !== null) stock.yearHigh = high;
-    if (low !== null) stock.yearLow = low;
-
-    renderAll();
-
-    return stock.price !== null && stock.price > 0;
-
-  } catch (error) {
-    console.error("Price fetch failed:", symbol, error);
-    return false;
-  }
+function showTab(id,btn){
+ document.querySelectorAll("main section").forEach(x=>x.classList.add("hidden"));
+ document.getElementById(id).classList.remove("hidden");
+ document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+ btn.classList.add("active");renderAll();
 }
-
-async function refreshStockPrices() {
-  if (refreshing) return;
-
-  refreshing = true;
-
-  $("refreshBtn").disabled = true;
-  setStatus("Refreshing watchlist and portfolio prices...");
-
-  try {
-    const symbols = [...new Set([
-      ...account.watchlist,
-      ...Object.keys(account.holdings).filter(
-        symbol => account.holdings[symbol]?.qty > 0
-      )
-    ])];
-
-    let successCount = 0;
-
-    for (const symbol of symbols) {
-      const success = await fetchOnePrice(symbol);
-      if (success) successCount++;
-    }
-
-    const time = new Date().toLocaleTimeString("en-IN");
-    $("lastUpdated").textContent = time;
-
-    setStatus(
-      `Price refresh completed: ${successCount} of ${symbols.length} stocks updated.`
-    );
-
-  } catch (error) {
-    console.error(error);
-    setStatus("Price refresh failed. Check internet connection.", true);
-
-  } finally {
-    refreshing = false;
-    $("refreshBtn").disabled = false;
-  }
-}
-
-async function loadNSEStocks() {
-  setStatus("Downloading NSE stock list...");
-
-  try {
-    const { data, error } = await sb.functions.invoke("stock-price", {
-      body: { action: "list" }
-    });
-
-    if (error) throw error;
-
-    if (
-      !data ||
-      data.success === false ||
-      !Array.isArray(data.stocks) ||
-      data.stocks.length === 0
-    ) {
-      throw new Error(data?.error || "NSE stock list is empty");
-    }
-
-    stocks = data.stocks
-      .filter(item => item.symbol && item.name)
-      .map(item => ({
-        symbol: String(item.symbol).trim(),
-        name: String(item.name).trim(),
-        series: item.series || "",
-        market: item.market || "",
-        price: null,
-        percentChange: null,
-        yearHigh: null,
-        yearLow: null
-      }));
-
-    renderAll();
-
-    setStatus(
-      `Loaded ${stocks.length.toLocaleString("en-IN")} NSE stocks. Search by company name or symbol.`
-    );
-
-    await refreshStockPrices();
-
-  } catch (error) {
-    console.error("NSE list error:", error);
-
-    setStatus(
-      "NSE stock list could not load. Check Edge Function deployment and internet connection.",
-      true
-    );
-  }
-}
-
-// Buy/Sell and Watchlist button actions
-document.addEventListener("click", async event => {
-  const buyButton = event.target.closest("[data-buy]");
-  const sellButton = event.target.closest("[data-sell]");
-  const addButton = event.target.closest("[data-add]");
-  const removeButton = event.target.closest("[data-remove]");
-
-  if (buyButton) {
-    await openTrade(buyButton.dataset.buy, "BUY");
-  }
-
-  if (sellButton) {
-    await openTrade(sellButton.dataset.sell, "SELL");
-  }
-
-  if (addButton) {
-    const symbol = addButton.dataset.add;
-
-    if (!account.watchlist.includes(symbol)) {
-      account.watchlist.push(symbol);
-    }
-
-    save();
-    renderAll();
-
-    setStatus(`Added ${symbol} to watchlist. Fetching price...`);
-
-    const success = await fetchOnePrice(symbol);
-
-    if (!success) {
-      setStatus(`Added ${symbol}, but its price is currently unavailable.`, true);
-    }
-  }
-
-  if (removeButton) {
-    const symbol = removeButton.dataset.remove;
-
-    account.watchlist = account.watchlist.filter(
-      item => item !== symbol
-    );
-
-    save();
-    renderAll();
-  }
-});
-
-async function openTrade(symbol, type) {
-  let stock = getStock(symbol);
-
-  if (!stock) {
-    alert("Stock not found.");
-    return;
-  }
-
-  if (type === "SELL") {
-    const holding = account.holdings[symbol];
-
-    if (!holding || holding.qty <= 0) {
-      alert("You do not own this stock.");
-      return;
-    }
-  }
-
-  if (!stock.price || stock.price <= 0) {
-    setStatus(`Fetching price for ${symbol}...`);
-
-    const success = await fetchOnePrice(symbol);
-
-    if (!success) {
-      alert("Price unavailable. Try refreshing later.");
-      return;
-    }
-  }
-
-  selectedSymbol = symbol;
-  tradeType = type;
-
-  $("tradeTitle").textContent =
-    (type === "BUY" ? "Buy " : "Sell ") + symbol;
-
-  $("tradeSymbol").textContent = stock.name;
-  $("tradePrice").textContent = money(stock.price);
-  $("quantity").value = 1;
-
-  $("confirmTrade").textContent = "Confirm " + type;
-  $("confirmTrade").className = type === "BUY" ? "buy" : "sell";
-
-  $("tradeModal").style.display = "flex";
-
-  updateAmount();
-}
-
-function closeTrade() {
-  $("tradeModal").style.display = "none";
-}
-
-function updateAmount() {
-  const stock = getStock(selectedSymbol);
-  const quantity = Math.floor(Number($("quantity").value) || 0);
-
-  const value = stock && quantity > 0
-    ? stock.price * quantity
-    : 0;
-
-  const charge = fees(value, tradeType);
-
-  $("orderValue").textContent = money(value);
-  $("orderCharges").textContent = money(charge);
-
-  $("netValue").textContent = money(
-    tradeType === "BUY" ? value + charge : value - charge
-  );
-
-  $("availableCash").textContent = money(account.cash);
-}
-
-function execute
+loadStocks();
+setInterval(refreshPrices,15*60*1000);
+</script>
+</body>
+  </html>
+  
